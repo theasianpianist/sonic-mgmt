@@ -1069,9 +1069,10 @@ class ProcMemCpuMonitor(object):
                 ax_tcm_free.plot(xs, [x[1] for x in series], marker="o", markersize=2, label=proc)
 
         plot_axes = list(axes) if hasattr(axes, "__iter__") else [axes]
-        for ev in res.events:
-            if ev.get("kind") != "event":
-                continue
+        plotted_events = [
+            ev for ev in res.events if ev.get("kind") == "event"
+        ]
+        for event_index, ev in enumerate(plotted_events):
             tw = ev["t_wall"]
             if isinstance(tw, str):
                 tw = datetime.fromisoformat(tw.replace("Z", "+00:00"))
@@ -1080,18 +1081,25 @@ class ProcMemCpuMonitor(object):
             label = ev.get("event", "event")
             for ax in plot_axes:
                 ax.axvline(tw, color="red", linestyle="--", alpha=0.35)
-                ymax = ax.get_ylim()[1]
-                ax.text(
-                    tw,
-                    ymax,
-                    label,
-                    rotation=90,
-                    va="top",
-                    ha="right",
-                    fontsize=7,
-                    color="darkred",
-                    clip_on=False,
-                )
+            label_axis = plot_axes[0]
+            label_axis.text(
+                tw,
+                0.98 - (event_index % 4) * 0.18,
+                label,
+                transform=label_axis.get_xaxis_transform(),
+                rotation=90,
+                va="top",
+                ha="right" if event_index % 2 == 0 else "left",
+                fontsize=7,
+                color="darkred",
+                bbox={
+                    "facecolor": "white",
+                    "edgecolor": "none",
+                    "alpha": 0.7,
+                    "pad": 0.5,
+                },
+                clip_on=False,
+            )
 
         if ax_sys_cpu is not None:
             ax_sys_cpu.set_ylabel("System CPU idle %")
